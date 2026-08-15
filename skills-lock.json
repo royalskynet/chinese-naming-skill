@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "chinese-naming": {
+      "source": "royalskynet/chinese-naming-skill",
+      "sourceType": "github",
+      "skillPath": "chinese-naming/SKILL.md",
+      "computedHash": "0b218ac64d9589c96f2c1094589b5ad05b02bbf137aec499979513e8f7dfc3fd"
+    }
+  }
+}
