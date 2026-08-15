@@ -1,0 +1,4 @@
+# npx skills add 本機安裝產物（勿進 repo）
+.agents/
+.claude/
+skills-lock.json
