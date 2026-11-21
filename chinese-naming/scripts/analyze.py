@@ -64,6 +64,8 @@ def shuli_lookup(num, shuli):
 
 def split_name(name, compound):
     """回傳 (is_compound, surname, given)。"""
+    if len(name) < 2:
+        raise ValueError('姓名至少需要一個姓氏字及一個名字字')
     if len(name) == 2:
         return False, name[0], name[1]
     if len(name) >= 4 and name[:2] in compound:
@@ -77,14 +79,9 @@ def split_name(name, compound):
     return False, name[0], name[1:]
 
 
-def compute_wuge(is_compound, surname, given, strokes):
+def compute_wuge(s_strokes, g_strokes):
     """計算五格。回傳 dict: 天/人/地/總/外 數值。"""
-    s_strokes = [strokes.get(c) for c in surname]
-    g_strokes = [strokes.get(c) for c in given]
-    if any(v is None for v in s_strokes + g_strokes):
-        missing = [c for c, v in zip(surname + given, s_strokes + g_strokes) if v is None]
-        raise ValueError('無法查得康熙筆畫: ' + ', '.join(missing))
-    if is_compound:
+    if len(s_strokes) == 2:
         tian = sum(s_strokes)
         ren = s_strokes[1] + g_strokes[0]
     else:
@@ -101,9 +98,12 @@ def compute_wuge(is_compound, surname, given, strokes):
 
 
 def analyze(name):
-    strokes, wuxing, sancai, shuli = load_assets()
     is_compound, surname, given = split_name(name, COMPOUND_SURNAMES)
-    ge = compute_wuge(is_compound, surname, given, strokes)
+    strokes, wuxing, sancai, shuli = load_assets()
+    missing = [c for c in surname + given if c not in strokes]
+    if missing:
+        raise ValueError('無法查得康熙筆畫: ' + ', '.join(missing))
+    ge = compute_wuge([strokes[c] for c in surname], [strokes[c] for c in given])
 
     sancai_config = ''.join(ge_wuxing(ge['天格']) + ge_wuxing(ge['人格']) + ge_wuxing(ge['地格']))
     sancai_info = sancai.get(sancai_config, {'result': '未知配置', 'evaluate': '此三才配置不在資料表中。', 'nums': ''})

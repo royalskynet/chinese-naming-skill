@@ -64,6 +64,8 @@ python3 scripts/analyze.py 歐陽娜娜
 python3 scripts/suggest.py 歐陽 --chars 2
 ```
 
+Pass either a one-character surname or a supported compound surname. Suggestions avoid first given-name characters that would make the analyzer read a different surname (such as 微 + 生, which it reads as 微生). Under the current rules, a one-character given name (`--chars 1`) yields no suggestions: its External Grid is always 2, which is graded inauspicious.
+
 ### Reading the output
 
 Judge the Human, Earthly, Total and External grids by their 81 numerology grade; the Heavenly grid is fixed by the surname and is not judged. The Three Talents are read through the productive and controlling relations of the Five Elements. A single inauspicious grid does not make the whole name inauspicious — combine the four judged grids with the Three Talents before drawing a conclusion. Results are traditional numerology for reference only, not a scientific prediction.
@@ -105,6 +107,8 @@ chinese-naming-skill/
 | Five-grid values (5 known names) | ✓ all values correct |
 | suggest output fed back into analyze | ✓ 137 combinations all auspicious |
 | SKILL.md frontmatter validation | ✓ description 60 chars / within ±100k / name compliant |
+
+Run the CLI regression tests from the repository root: `python3 -m unittest discover -s tests`.
 
 ### License
 
@@ -156,6 +160,8 @@ python3 scripts/analyze.py 歐陽娜娜
 python3 scripts/suggest.py 歐陽 --chars 2
 ```
 
+請輸入一字姓氏或已支援的複姓。建議會避開讓分析程式判成另一個姓的名字首字，例如「微」加「生」會被判成複姓「微生」。依目前規則，單名（`--chars 1`）固定是外格 2，數理表將 2 列為凶，因此不會列出建議。
+
 ### 輸出怎麼解讀
 
 人格、地格、總格、外格看 81 數理吉凶；天格由姓氏先天決定，不列入吉凶判斷。三才則看五行生剋關係。任何單一格為凶，不必然代表整體為凶——應把四個受判的格與三才吉凶綜合判讀。此為傳統姓名學參考，非科學預測，結果僅供參考。
@@ -197,6 +203,8 @@ chinese-naming-skill/
 | 五格數值（5 個已知案例） | ✓ 全數值正確 |
 | suggest 回灌 analyze | ✓ 137 組合全吉 |
 | SKILL.md frontmatter 驗證 | ✓ description 60 字元 / ±100k 內 / name 合規 |
+
+從專案根目錄執行 `python3 -m unittest discover -s tests`，可重跑命令列測試。
 
 ### License
 
