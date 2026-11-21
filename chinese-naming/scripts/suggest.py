@@ -16,69 +16,36 @@ CLI:  python3 suggest.py 王
 """
 import argparse
 import json
-import os
 
-ASSETS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets')
+from analyze import COMPOUND_SURNAMES, compute_wuge, ge_wuxing, load_assets, shuli_lookup
 
 BAD_SANCAI = {'大凶', '凶', '凶多于吉', '凶多吉少'}
 GOOD_GRADE = {'大吉', '中吉'}
 STROKE_RANGE = range(1, 41)
 
 
-def load_assets():
-    with open(os.path.join(ASSETS, 'strokes.json'), encoding='utf-8') as f:
-        strokes = json.load(f)['strokes']
-    with open(os.path.join(ASSETS, 'wuxing.json'), encoding='utf-8') as f:
-        wuxing = json.load(f)['wuxing']
-    with open(os.path.join(ASSETS, 'sancai.json'), encoding='utf-8') as f:
-        sancai = json.load(f)['sancai']
-    with open(os.path.join(ASSETS, 'shuli81.json'), encoding='utf-8') as f:
-        shuli = json.load(f)['shuli']
-    return strokes, wuxing, sancai, shuli
-
-
-def ge_wuxing(num):
-    return {1: '木', 2: '木', 3: '火', 4: '火', 5: '土', 6: '土', 7: '金', 8: '金', 9: '水', 0: '水'}[num % 10]
-
-
 def suggest(surname, wuxing_filter=None, limit=10, chars=2):
+    if len(surname) != 1 and surname not in COMPOUND_SURNAMES:
+        raise ValueError('請輸入一字姓氏或已支援的複姓')
     strokes, wuxing, sancai, shuli = load_assets()
     if any(c not in strokes for c in surname):
         missing = [c for c in surname if c not in strokes]
         raise ValueError('姓氏無法查得康熙筆畫: ' + ', '.join(missing))
 
     s_strokes = [strokes[c] for c in surname]
-    is_compound = len(surname) >= 2
+    ambiguous_initials = {
+        compound[1] for compound in COMPOUND_SURNAMES
+        if len(surname) == 1 and chars == 2 and compound[0] == surname
+    }
     results = []
 
     for a in STROKE_RANGE:
         for b in STROKE_RANGE:
-            if is_compound:
-                tian = sum(s_strokes)
-                ren = s_strokes[1] + a
-            else:
-                tian = s_strokes[0] + 1
-                ren = s_strokes[0] + a
-            if chars == 2:
-                di = a + b
-                zong = sum(s_strokes) + a + b
-                wai = zong - ren + 1
-            else:
-                di = a + 1
-                zong = sum(s_strokes) + a
-                wai = 2
+            ge_values = compute_wuge(s_strokes, [a, b] if chars == 2 else [a])
 
             # 81 數理吉凶檢查：人/地/總/外
-            ge_values = {'天格': tian, '人格': ren, '地格': di, '總格': zong, '外格': wai}
             checked = ['人格', '地格', '總格', '外格']
-            ok = True
-            for g in checked:
-                num = ge_values[g]
-                key = str(num if num <= 81 else (num - 1) % 81 + 1)
-                if shuli.get(key, {}).get('grade') not in GOOD_GRADE:
-                    ok = False
-                    break
-            if not ok:
+            if any(shuli_lookup(ge_values[g], shuli)['grade'] not in GOOD_GRADE for g in checked):
                 continue
 
             # 三才檢查
@@ -88,7 +55,7 @@ def suggest(surname, wuxing_filter=None, limit=10, chars=2):
                 continue
 
             # 候選字
-            mid_cands = [c for c in wuxing if strokes.get(c) == a]
+            mid_cands = [c for c in wuxing if strokes.get(c) == a and c not in ambiguous_initials]
             last_cands = [c for c in wuxing if strokes.get(c) == b]
             if wuxing_filter and len(wuxing_filter) >= 1:
                 mid_cands = [c for c in mid_cands if wuxing.get(c) == wuxing_filter[0]]
